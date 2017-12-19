@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/java">
-		<attributes>
-			<attribute name="FROM_GRADLE_MODEL" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="resources/" kind="src" path="src/test/java">
-		<attributes>
-			<attribute name="FROM_GRADLE_MODEL" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="src" path="src/test/java/resources"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry kind="lib" path="C:/Users/Admin/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.7.6/c7012a59b4f36843489753a2027e169c3b8586f8/jackson-databind-2.7.6.jar" sourcepath="C:/Users/Admin/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.7.6/d66be3a613aafe49740b5b13532c7b4a700750dd/jackson-databind-2.7.6-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

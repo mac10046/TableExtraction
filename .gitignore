@@ -1,0 +1,9 @@
+.gradle/
+.settings/
+bin/
+build/
+.classpath
+.project
+npm-debug.log
+.metadata/
+.recommenders/
