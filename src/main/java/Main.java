@@ -1,8 +1,9 @@
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -18,34 +19,33 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Main {
 
-//	public ObjectMapper mapper = new ObjectMapper();
+	public ObjectMapper mapper = new ObjectMapper();
 
 	public static void main(String[] args) {
-//		for (String html : args) {
-//			Main main = new Main();
-//			try {
-//				main.parseHtml(html);
-//			} catch (JsonProcessingException e) {
-//				e.printStackTrace();
-//			}
-//		}
-		
+		// for (String html : args) {
+		// Main main = new Main();
+		// try {
+		// main.parseHtml(html);
+		// } catch (JsonProcessingException e) {
+		// e.printStackTrace();
+		// }
+		// }
+
 		Main main = new Main();
-		
+
 		String html = main.getFile("appleInc.html");
 		try {
 			main.parseHtml(html);
 		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	private String getFile(String fileName) {
 
 		StringBuilder result = new StringBuilder("");
 
-		//Get file from resources folder
+		// Get file from resources folder
 		ClassLoader classLoader = getClass().getClassLoader();
 		File file = new File(classLoader.getResource(fileName).getFile());
 
@@ -64,22 +64,30 @@ public class Main {
 
 		return result.toString();
 
-	  }
+	}
 
 	public void parseHtml(String html) throws JsonProcessingException {
-		Document document = Jsoup.parse(html);
+		Document completeDocument = Jsoup.parse(html);
+
+		Element document = completeDocument.getElementsByTag("text").first();
+		
+//		stream().limit(100).forEach(elem -> {
+//			int counter = 0;
+//			System.out.println((counter++) + " ** " + elem.outerHtml());
+//		});
+//		System.exit(0);
 		// parse all the table required
-//		ArrayNode tableInfo = retrieveTableInfo(document);
+		ArrayNode tableInfo = retrieveTableInfo(document);
 
 		// get the metadata from the html
-		ObjectNode metadataObject = retrieveMetadataInfo(document);
-//		tableInfo.add(metadataObject);
-//		System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
+		ObjectNode metadataObject = retrieveMetadataInfo(completeDocument);
+		// tableInfo.add(metadataObject);
+		// System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
 	}
 
 	@SuppressWarnings("unused")
 	private ObjectNode retrieveMetadataInfo(Document document) {
-		String type = document.getElementsByTag("type").text();
+		String type = document.getElementsByTag("type").first().ownText();
 		String companyName = findCompanyName(document);
 		String employerIdentificationNo = findEmployerIdentificationNumber(document);
 		return null;
@@ -113,20 +121,89 @@ public class Main {
 		return document.getElementsContainingText("Exact name of Registrant").prev("div").text();
 	}
 
-	private ArrayNode retrieveTableInfo(Document document) {
+	private ArrayNode retrieveTableInfo(Element document) {
 		Elements tables = document.getElementsByTag("table");
 		tables.forEach(table -> {
 			if (Validator.isTableUsefull(table))
 				return;
-			String tableTitle = getTableTitle(document, table);
+
+			ArrayNode tableData = mapper.createArrayNode();
+			Iterator<Element> rows = table.getElementsByTag("tr").iterator();
+			int rowIndex = 0;
+			int columnIndex = 0;
+			String subHeader = "";
+			ArrayList<String> rowHeaders = new ArrayList<String>();
+			while (rows.hasNext()) {
+				Element row = (Element) rows.next();
+				if (row.hasText()) {
+					Iterator<Element> columns = row.getElementsByTag("td").iterator();
+					if (!rowHasSubHeaders(row)) {
+						while (columns.hasNext()) {
+							Element column = (Element) columns.next();
+							if (column.hasText()) {
+								if (rowIndex == 0) {
+									rowHeaders.add(column.text());
+									continue;
+								}
+								if (column.text().equals("$"))
+									continue;
+								ObjectNode obj = mapper.createObjectNode();
+								obj.put(rowHeaders.get(columnIndex), subHeader + column.text());
+								tableData.add(obj);
+								columnIndex++;
+							}
+						}
+					} else {
+						subHeader += row.text() + ".";
+					}
+					rowIndex++;
+				} else if (rowIndex > 0) {
+					subHeader = "";
+				}
+			}
+
+			String tableTitle = getTableTitle(table);
 
 		});
 
 		return null;
 	}
 
-	private String getTableTitle(Document document, Element table) {
-		// TODO Auto-generated method stub
-		return null;
+	private boolean rowHasSubHeaders(Element row) {
+		Iterator<Element> tds = row.getElementsByTag("td").iterator();
+		int counter = 0;
+		while (tds.hasNext()) {
+			Element td = (Element) tds.next();
+			if (td.hasText())
+				counter++;
+		}
+		return counter > 1;
+	}
+
+	private String getTableTitle(Element table) {
+		Iterator<Element> iterator = table.parents().iterator();
+		String title;
+		while (iterator.hasNext()) {
+			Element element = (Element) iterator.next();
+			if (element.tagName().equals("div")) {
+				title = recurringPreviousSearch(element, 10);
+				if (title.contains("table"))
+					continue;
+			}
+		}
+		return "table-" + new Random().nextLong();
+	}
+
+	private String recurringPreviousSearch(Element element, int iterateLimit) {
+		String outerHtml = element.previousElementSibling().outerHtml();
+		String title = Jsoup.parse(outerHtml).getElementsByAttributeValueContaining("style", "font-weight:bold").first()
+				.ownText();
+		if (title.isEmpty()) {
+			if (iterateLimit > 0)
+				return recurringPreviousSearch(element.previousElementSibling(), iterateLimit--);
+			else
+				return "table-" + new Random().nextLong();
+		} else
+			return title;
 	}
 }
