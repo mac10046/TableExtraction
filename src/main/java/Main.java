@@ -1,4 +1,16 @@
-
+/**
+ *  author: Abdeali Chandanwala
+ *  
+ *  To Do List: 
+ *  table Metadata, 
+ *  Plus Minus on Figures, 
+ *  Proforma or not check,
+ *  Units for the number e.g. dollars, shares
+ *  Date associated with the number from the header eg 2001 on Table Level
+ *  The date of the document from the index on Document Level metadata
+ *  -An ability to specify sections of interest (NamedRecord)
+ *  -Example Specified at the bottom is also quiet nice and appropriate 
+ */
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,7 +97,7 @@ public class Main {
 		String type = document.getElementsByTag("type").first().ownText();
 		String companyName = findCompanyName(document);
 		String employerIdentificationNo = findEmployerIdentificationNumber(document);
-		metaData.put("type", type);
+		metaData.put("Doc Type", type);
 		metaData.put("Company Name", companyName);
 		metaData.put("Employer Identification Number", employerIdentificationNo);
 		return metaData;
