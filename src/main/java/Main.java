@@ -131,19 +131,20 @@ public class Main {
 			int rowIndex = 0;
 			int columnIndex = 0;
 			String subHeader = "";
-			ArrayList<String> rowHeaders = new ArrayList<String>();
+			ArrayList<String> tableHeader = new ArrayList<String>();
 			while (rows.hasNext()) {
 				Element row = (Element) rows.next();
 				if (row.hasText()) {
 					ObjectNode obj = mapper.createObjectNode();
 					Iterator<Element> columns = row.getElementsByTag("td").iterator();
 					if (!rowHasSubHeaders(row)) {
+						columnIndex = 0;
 						while (columns.hasNext()) {
 							Element column = (Element) columns.next();
 							if (column.hasText()) {
 								String columnText = column.text();
 								if (rowIndex == 0) {
-									rowHeaders.add(column.text());
+									tableHeader.add(columnText);
 									continue;
 								}
 								if (column.text().equals("$")) {
@@ -154,15 +155,15 @@ public class Main {
 									columnText = subHeader + columnText;
 								}
 								
-								obj.put(rowHeaders.get(columnIndex), columnText);
+								obj.put(tableHeader.get(columnIndex), columnText);
 								columnIndex++;
 							}
 						}
+						tableData.add(obj);
+						rowIndex++;
 					} else {
 						subHeader += row.text() + "."; // adds the Sub Heading as per sequence
 					}
-					tableData.add(obj);
-					rowIndex++;
 				} else if (rowIndex > 0) {
 					subHeader = "";
 				}
