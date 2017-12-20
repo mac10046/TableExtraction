@@ -146,14 +146,14 @@ public class Main {
 			ArrayList<String> tableHeader = new ArrayList<String>();
 			while (rows.hasNext()) {
 				Element row = (Element) rows.next();
-				if (row.hasText()) {
+				if (!row.text().trim().isEmpty()) {
 					ObjectNode obj = mapper.createObjectNode();
 					Iterator<Element> columns = row.getElementsByTag("td").iterator();
 					if (!rowHasSubHeaders(row)) {
 						columnIndex = 0;
 						while (columns.hasNext()) {
 							Element column = (Element) columns.next();
-							if (column.hasText()) {
+							if (!column.text().trim().isEmpty()) {
 								String columnText = column.text();
 								if (rowIndex == 0) {
 									tableHeader.add(columnText);
@@ -189,8 +189,7 @@ public class Main {
 	}
 
 	private boolean isTableRequiredToBeParsedFurthur(Element table) {
-		// TODO Auto-generated method stub
-		return false;
+		return !table.text().trim().isEmpty();
 	}
 
 	private boolean rowHasSubHeaders(Element row) {
@@ -198,7 +197,7 @@ public class Main {
 		int counter = 0;
 		while (tds.hasNext()) {
 			Element td = (Element) tds.next();
-			if (td.hasText())
+			if (!td.text().trim().isEmpty())
 				counter++;
 		}
 		return counter > 1;
@@ -210,7 +209,7 @@ public class Main {
 		while (iterator.hasNext()) {
 			Element element = (Element) iterator.next();
 			if (element.tagName().equals("div")) {
-				title = recurringPreviousSearch(element, 10);
+				title = recurringPreviousSearch(element, 10); //TODO: fix Null Pointer
 				if (title.contains("table"))
 					continue;
 			}
