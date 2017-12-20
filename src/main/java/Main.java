@@ -71,11 +71,6 @@ public class Main {
 
 		Element document = completeDocument.getElementsByTag("text").first();
 
-		// stream().limit(100).forEach(elem -> {
-		// int counter = 0;
-		// System.out.println((counter++) + " ** " + elem.outerHtml());
-		// });
-		// System.exit(0);
 		// parse all the table required
 		ObjectNode tableInfo = retrieveTableInfo(document);
 
@@ -85,7 +80,6 @@ public class Main {
 		System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
 	}
 
-	@SuppressWarnings("unused")
 	private ObjectNode retrieveMetadataInfo(Document document) {
 		ObjectNode metaData = mapper.createObjectNode();
 		String type = document.getElementsByTag("type").first().ownText();
@@ -129,7 +123,7 @@ public class Main {
 		Elements tables = document.getElementsByTag("table");
 		ObjectNode allTableData = mapper.createObjectNode();
 		tables.forEach(table -> {
-			if (Validator.isTableUsefull(table))
+			if (!isTableRequiredToBeParsedFurthur(table))
 				return;
 
 			ArrayNode tableData = mapper.createArrayNode();
@@ -179,6 +173,11 @@ public class Main {
 		});
 
 		return allTableData;
+	}
+
+	private boolean isTableRequiredToBeParsedFurthur(Element table) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	private boolean rowHasSubHeaders(Element row) {
