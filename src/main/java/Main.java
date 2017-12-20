@@ -70,27 +70,31 @@ public class Main {
 		Document completeDocument = Jsoup.parse(html);
 
 		Element document = completeDocument.getElementsByTag("text").first();
-		
-//		stream().limit(100).forEach(elem -> {
-//			int counter = 0;
-//			System.out.println((counter++) + " ** " + elem.outerHtml());
-//		});
-//		System.exit(0);
+
+		// stream().limit(100).forEach(elem -> {
+		// int counter = 0;
+		// System.out.println((counter++) + " ** " + elem.outerHtml());
+		// });
+		// System.exit(0);
 		// parse all the table required
-		ArrayNode tableInfo = retrieveTableInfo(document);
+		ObjectNode tableInfo = retrieveTableInfo(document);
 
 		// get the metadata from the html
 		ObjectNode metadataObject = retrieveMetadataInfo(completeDocument);
-		// tableInfo.add(metadataObject);
-		// System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
+		tableInfo.set("Document Metadata",metadataObject);
+		System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
 	}
 
 	@SuppressWarnings("unused")
 	private ObjectNode retrieveMetadataInfo(Document document) {
+		ObjectNode metaData = mapper.createObjectNode();
 		String type = document.getElementsByTag("type").first().ownText();
 		String companyName = findCompanyName(document);
 		String employerIdentificationNo = findEmployerIdentificationNumber(document);
-		return null;
+		metaData.put("type", type);
+		metaData.put("Company Name", companyName);
+		metaData.put("Employer Identification Number", employerIdentificationNo);
+		return metaData;
 	}
 
 	private String findEmployerIdentificationNumber(Document document) {
@@ -102,7 +106,7 @@ public class Main {
 			while (iterator.hasNext()) {
 				Element element = (Element) iterator.next();
 				if (element.is("tr")) {
-					employerNo = element.getElementsMatchingText(getPattern()).text();
+					employerNo = element.getElementsMatchingText(getPattern()).eachText().get(0);
 				}
 			}
 		}
@@ -121,8 +125,9 @@ public class Main {
 		return document.getElementsContainingText("Exact name of Registrant").prev("div").text();
 	}
 
-	private ArrayNode retrieveTableInfo(Element document) {
+	private ObjectNode retrieveTableInfo(Element document) {
 		Elements tables = document.getElementsByTag("table");
+		ObjectNode allTableData = mapper.createObjectNode();
 		tables.forEach(table -> {
 			if (Validator.isTableUsefull(table))
 				return;
@@ -136,26 +141,33 @@ public class Main {
 			while (rows.hasNext()) {
 				Element row = (Element) rows.next();
 				if (row.hasText()) {
+					ObjectNode obj = mapper.createObjectNode();
 					Iterator<Element> columns = row.getElementsByTag("td").iterator();
 					if (!rowHasSubHeaders(row)) {
 						while (columns.hasNext()) {
 							Element column = (Element) columns.next();
 							if (column.hasText()) {
+								String columnText = column.text();
 								if (rowIndex == 0) {
 									rowHeaders.add(column.text());
 									continue;
 								}
-								if (column.text().equals("$"))
+								if (column.text().equals("$")) {
 									continue;
-								ObjectNode obj = mapper.createObjectNode();
-								obj.put(rowHeaders.get(columnIndex), subHeader + column.text());
-								tableData.add(obj);
+								} else if (isNumeric(columnText)) {
+									columnText.replaceAll(",", "");
+								} else if (columnIndex == 0) {
+									columnText = subHeader + columnText;
+								}
+								
+								obj.put(rowHeaders.get(columnIndex), columnText);
 								columnIndex++;
 							}
 						}
 					} else {
-						subHeader += row.text() + ".";
+						subHeader += row.text() + "."; // adds the Sub Heading as per sequence
 					}
+					tableData.add(obj);
 					rowIndex++;
 				} else if (rowIndex > 0) {
 					subHeader = "";
@@ -163,10 +175,10 @@ public class Main {
 			}
 
 			String tableTitle = getTableTitle(table);
-
+			allTableData.set(tableTitle, tableData);
 		});
 
-		return null;
+		return allTableData;
 	}
 
 	private boolean rowHasSubHeaders(Element row) {
@@ -205,5 +217,9 @@ public class Main {
 				return "table-" + new Random().nextLong();
 		} else
 			return title;
+	}
+
+	public static boolean isNumeric(String str) {
+		return str.matches(",?\\d+(\\.\\d+)?"); // match a number with optional ',' and decimal.
 	}
 }
