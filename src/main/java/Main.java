@@ -1,3 +1,4 @@
+
 /**
  *  author: Abdeali Chandanwala
  *  
@@ -88,7 +89,7 @@ public class Main {
 
 		// get the metadata from the html
 		ObjectNode metadataObject = retrieveMetadataInfo(completeDocument);
-		tableInfo.set("Document Metadata",metadataObject);
+		tableInfo.set("Document Metadata", metadataObject);
 		System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableInfo));
 	}
 
@@ -138,6 +139,14 @@ public class Main {
 			if (!isTableRequiredToBeParsedFurthur(table))
 				return;
 
+			String tableTitle;
+			try {
+				tableTitle = getTableTitle(table);
+				System.out.println("Table Title: "+tableTitle);
+			} catch (NullPointerException e) {
+				return;
+			}
+
 			ArrayNode tableData = mapper.createArrayNode();
 			Iterator<Element> rows = table.getElementsByTag("tr").iterator();
 			int rowIndex = 0;
@@ -166,12 +175,12 @@ public class Main {
 								} else if (columnIndex == 0) {
 									columnText = subHeader + columnText;
 								}
-								
+
 								obj.put(tableHeader.get(columnIndex), columnText);
 								columnIndex++;
 							}
 						}
-						tableData.add(obj);
+						tableData.add(obj); //TODO: rectify issue
 						rowIndex++;
 					} else {
 						subHeader += row.text() + "."; // adds the Sub Heading as per sequence
@@ -181,7 +190,13 @@ public class Main {
 				}
 			}
 
-			String tableTitle = getTableTitle(table);
+			if (tableTitle.isEmpty())
+				return;
+			try {
+				System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(tableData));
+			} catch (JsonProcessingException e) {
+				System.out.println("UnRequired Error 1");
+			}
 			allTableData.set(tableTitle, tableData);
 		});
 
@@ -200,16 +215,16 @@ public class Main {
 			if (!td.text().trim().isEmpty())
 				counter++;
 		}
-		return counter > 1;
+		return counter == 1;
 	}
 
-	private String getTableTitle(Element table) {
+	private String getTableTitle(Element table) throws NullPointerException {
 		Iterator<Element> iterator = table.parents().iterator();
 		String title;
 		while (iterator.hasNext()) {
 			Element element = (Element) iterator.next();
 			if (element.tagName().equals("div")) {
-				title = recurringPreviousSearch(element, 10); //TODO: fix Null Pointer
+				title = recurringPreviousSearch(element, 10);
 				if (title.contains("table"))
 					continue;
 			}
@@ -217,7 +232,7 @@ public class Main {
 		return "table-" + new Random().nextLong();
 	}
 
-	private String recurringPreviousSearch(Element element, int iterateLimit) {
+	private String recurringPreviousSearch(Element element, int iterateLimit) throws NullPointerException {
 		String outerHtml = element.previousElementSibling().outerHtml();
 		String title = Jsoup.parse(outerHtml).getElementsByAttributeValueContaining("style", "font-weight:bold").first()
 				.ownText();
